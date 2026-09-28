@@ -1,0 +1,620 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Cricket Bowling Variations Simulator</title>
+
+<style>
+*{box-sizing:border-box}
+
+body{
+  margin:0;
+  font-family:Arial,sans-serif;
+  background:#0b1220;
+  color:white;
+}
+
+.container{
+  max-width:1100px;
+  margin:auto;
+  padding:20px;
+}
+
+h1{
+  text-align:center;
+  margin-bottom:5px;
+}
+
+.subtitle{
+  text-align:center;
+  color:#b8c4d6;
+  margin-bottom:20px;
+}
+
+.tabs{
+  display:flex;
+  justify-content:center;
+  gap:10px;
+  margin-bottom:15px;
+}
+
+.tabs button{
+  padding:12px 30px;
+  border:0;
+  border-radius:8px;
+  cursor:pointer;
+  font-weight:bold;
+  background:#273449;
+  color:white;
+}
+
+.tabs button.active{
+  background:#1683ff;
+}
+
+.variations{
+  display:flex;
+  flex-wrap:wrap;
+  gap:8px;
+  justify-content:center;
+  margin-bottom:20px;
+}
+
+.variations button{
+  border:1px solid #40506a;
+  background:#182337;
+  color:white;
+  padding:8px 12px;
+  border-radius:7px;
+  cursor:pointer;
+}
+
+.variations button:hover{
+  background:#1683ff;
+}
+
+.pitch-area{
+  background:#111c2d;
+  border-radius:15px;
+  padding:15px;
+  overflow:hidden;
+}
+
+svg{
+  width:100%;
+  height:auto;
+  display:block;
+}
+
+.pitch{
+  fill:#c99b61;
+  stroke:#e9d4a9;
+  stroke-width:3;
+}
+
+.creaseline{
+  stroke:white;
+  stroke-width:3;
+}
+
+.stumps{
+  stroke:white;
+  stroke-width:5;
+}
+
+.ball{
+  fill:#d71920;
+  stroke:white;
+  stroke-width:2;
+}
+
+.bounce{
+  fill:#ff3030;
+  stroke:white;
+  stroke-width:3;
+}
+
+.bounce-ring{
+  fill:none;
+  stroke:#ff3030;
+  stroke-width:3;
+  opacity:.8;
+}
+
+.info{
+  display:grid;
+  grid-template-columns:repeat(4,1fr);
+  gap:10px;
+  margin-top:15px;
+}
+
+.card{
+  background:#182337;
+  padding:14px;
+  border-radius:10px;
+  text-align:center;
+}
+
+.card small{
+  display:block;
+  color:#9eacc1;
+  margin-bottom:5px;
+}
+
+.card strong{
+  font-size:18px;
+}
+
+.description{
+  margin-top:15px;
+  background:#182337;
+  border-radius:10px;
+  padding:15px;
+  line-height:1.5;
+}
+
+@media(max-width:700px){
+  .info{
+    grid-template-columns:repeat(2,1fr);
+  }
+}
+</style>
+</head>
+
+<body>
+
+<div class="container">
+
+<h1>🏏 Cricket Bowling Variations Simulator</h1>
+
+<div class="subtitle">
+Umpire's Perspective • Watch the trajectory, bounce and movement
+</div>
+
+<div class="tabs">
+<button id="paceBtn" class="active" onclick="showType('pace')">
+PACE
+</button>
+
+<button id="spinBtn" onclick="showType('spin')">
+SPIN
+</button>
+</div>
+
+<div class="variations" id="variationButtons"></div>
+
+<div class="pitch-area">
+
+<svg viewBox="0 0 1000 620">
+
+<!-- Pitch -->
+<polygon
+class="pitch"
+points="300,70 700,70 850,550 150,550"
+/>
+
+<!-- Pitch center line -->
+<line
+x1="500" y1="70"
+x2="500" y2="550"
+stroke="#b88951"
+stroke-width="2"
+/>
+
+<!-- Bowler end crease -->
+<line class="creaseline"
+x1="365" y1="105"
+x2="635" y2="105"
+/>
+
+<!-- Batter end crease -->
+<line class="creaseline"
+x1="255" y1="500"
+x2="745" y2="500"
+/>
+
+<!-- Bowler stumps -->
+<line class="stumps" x1="480" y1="95" x2="480" y2="125"/>
+<line class="stumps" x1="500" y1="95" x2="500" y2="125"/>
+<line class="stumps" x1="520" y1="95" x2="520" y2="125"/>
+
+<!-- Batter stumps -->
+<line class="stumps" x1="470" y1="485" x2="470" y2="520"/>
+<line class="stumps" x1="500" y1="485" x2="500" y2="520"/>
+<line class="stumps" x1="530" y1="485" x2="530" y2="520"/>
+
+<!-- Batter -->
+<circle cx="500" cy="455" r="18" fill="#2e86de"/>
+<line x1="500" y1="473" x2="500" y2="515"
+stroke="#2e86de" stroke-width="8"/>
+
+<!-- Trajectory -->
+<path id="trajectory"
+d="M500 115 Q500 260 500 390 Q500 440 500 485"
+fill="none"
+stroke="#ffdd55"
+stroke-width="5"
+stroke-dasharray="12 8"/>
+
+<!-- Bounce -->
+<circle id="bounceRing"
+class="bounce-ring"
+cx="500"
+cy="390"
+r="14"/>
+
+<circle id="bounce"
+class="bounce"
+cx="500"
+cy="390"
+r="7"/>
+
+<!-- Ball -->
+<circle id="ball"
+class="ball"
+cx="500"
+cy="115"
+r="9"/>
+
+<!-- Labels -->
+<text x="500" y="50"
+fill="white"
+text-anchor="middle"
+font-size="22">
+BOWLER
+</text>
+
+<text x="500" y="590"
+fill="white"
+text-anchor="middle"
+font-size="22">
+BATTER
+</text>
+
+<text id="bounceText"
+x="525"
+y="390"
+fill="white"
+font-size="18">
+BOUNCE
+</text>
+
+</svg>
+
+</div>
+
+<div class="info">
+
+<div class="card">
+<small>DELIVERY</small>
+<strong id="delivery">Fast Ball</strong>
+</div>
+
+<div class="card">
+<small>SPEED</small>
+<strong id="speed">140 km/h</strong>
+</div>
+
+<div class="card">
+<small>LENGTH</small>
+<strong id="length">Good Length</strong>
+</div>
+
+<div class="card">
+<small>MOVEMENT</small>
+<strong id="movement">Straight</strong>
+</div>
+
+</div>
+
+<div class="description">
+<strong>How to use:</strong>
+Select a bowling variation above. The red marker shows approximately
+where the ball bounces, while the yellow trail shows the ball's path.
+The simulation is viewed from the umpire's perspective.
+</div>
+
+</div>
+
+<script>
+
+const pace = {
+
+"Fast Ball":{
+speed:"140 km/h",
+length:"Good Length",
+movement:"Straight",
+bounce:390,
+curve:"M500 115 Q500 250 500 390 Q500 440 500 485"
+},
+
+"Yorker":{
+speed:"145 km/h",
+length:"Yorker",
+movement:"Straight",
+bounce:470,
+curve:"M500 115 Q500 280 500 470 Q500 480 500 485"
+},
+
+"Full Toss":{
+speed:"138 km/h",
+length:"Full Toss",
+movement:"No Bounce",
+bounce:470,
+curve:"M500 115 Q500 300 500 485"
+},
+
+"Bouncer":{
+speed:"145 km/h",
+length:"Short",
+movement:"Rises sharply",
+bounce:300,
+curve:"M500 115 Q500 200 500 300 Q500 250 500 210"
+},
+
+"Slower Ball":{
+speed:"105 km/h",
+length:"Good Length",
+movement:"Slower",
+bounce:390,
+curve:"M500 115 Q480 230 500 390 Q500 440 500 485"
+},
+
+"Off Cutter":{
+speed:"125 km/h",
+length:"Good Length",
+movement:"Moves off",
+bounce:390,
+curve:"M500 115 Q470 250 450 390 Q430 440 425 485"
+},
+
+"Leg Cutter":{
+speed:"125 km/h",
+length:"Good Length",
+movement:"Moves leg side",
+bounce:390,
+curve:"M500 115 Q530 250 550 390 Q570 440 575 485"
+},
+
+"Inswinger":{
+speed:"135 km/h",
+length:"Full",
+movement:"Moves inward",
+bounce:425,
+curve:"M500 115 Q450 250 475 425 Q485 460 500 485"
+},
+
+"Outswinger":{
+speed:"135 km/h",
+length:"Good Length",
+movement:"Moves outward",
+bounce:390,
+curve:"M500 115 Q550 250 525 390 Q515 440 510 485"
+},
+
+"Reverse Swing":{
+speed:"145 km/h",
+length:"Full",
+movement:"Late inward swing",
+bounce:430,
+curve:"M500 115 Q520 250 470 430 Q480 460 500 485"
+},
+
+"Seam-Up":{
+speed:"138 km/h",
+length:"Good Length",
+movement:"Seam movement",
+bounce:390,
+curve:"M500 115 Q495 250 500 390 Q510 430 500 485"
+},
+
+"Cross-Seam":{
+speed:"132 km/h",
+length:"Variable",
+movement:"Unpredictable",
+bounce:370,
+curve:"M500 115 Q470 250 520 370 Q490 430 500 485"
+},
+
+"Knuckle Ball":{
+speed:"105 km/h",
+length:"Good Length",
+movement:"Late dip",
+bounce:400,
+curve:"M500 115 Q500 270 480 400 Q490 450 500 485"
+},
+
+"Split-Finger Slower Ball":{
+speed:"110 km/h",
+length:"Full",
+movement:"Late dip",
+bounce:425,
+curve:"M500 115 Q500 270 475 425 Q490 460 500 485"
+}
+
+};
+
+const spin = {
+
+"Off Break":{
+speed:"85 km/h",
+length:"Good Length",
+movement:"Turns away",
+bounce:390,
+curve:"M500 115 Q480 250 450 390 Q430 440 420 485"
+},
+
+"Arm Ball":{
+speed:"100 km/h",
+length:"Full",
+movement:"Straight",
+bounce:430,
+curve:"M500 115 Q500 270 500 430 Q500 460 500 485"
+},
+
+"Doosra":{
+speed:"90 km/h",
+length:"Good Length",
+movement:"Turns opposite",
+bounce:390,
+curve:"M500 115 Q520 250 550 390 Q570 440 580 485"
+},
+
+"Carrom Ball":{
+speed:"90 km/h",
+length:"Good Length",
+movement:"Sharp turn",
+bounce:400,
+curve:"M500 115 Q490 260 450 400 Q420 450 410 485"
+},
+
+"Leg Break":{
+speed:"85 km/h",
+length:"Good Length",
+movement:"Turns away",
+bounce:390,
+curve:"M500 115 Q520 250 560 390 Q590 440 600 485"
+},
+
+"Googly":{
+speed:"88 km/h",
+length:"Good Length",
+movement:"Turns opposite",
+bounce:390,
+curve:"M500 115 Q480 250 445 390 Q420 440 410 485"
+},
+
+"Topspinner":{
+speed:"90 km/h",
+length:"Good Length",
+movement:"Extra bounce",
+bounce:360,
+curve:"M500 115 Q500 240 500 360 Q500 300 500 250"
+},
+
+"Flipper":{
+speed:"100 km/h",
+length:"Full",
+movement:"Skids low",
+bounce:430,
+curve:"M500 115 Q500 280 500 430 Q500 450 500 485"
+},
+
+"Slider":{
+speed:"95 km/h",
+length:"Full",
+movement:"Skids straight",
+bounce:430,
+curve:"M500 115 Q510 280 500 430 Q500 460 500 485"
+},
+
+"Backspinner":{
+speed:"80 km/h",
+length:"Short",
+movement:"Low bounce",
+bounce:330,
+curve:"M500 115 Q500 230 500 330 Q500 300 500 270"
+}
+
+};
+
+let currentType="pace";
+
+function showType(type){
+
+currentType=type;
+
+document.getElementById("paceBtn")
+.classList.toggle("active",type==="pace");
+
+document.getElementById("spinBtn")
+.classList.toggle("active",type==="spin");
+
+createButtons();
+
+}
+
+function createButtons(){
+
+const box=document.getElementById("variationButtons");
+
+box.innerHTML="";
+
+const data=currentType==="pace"?pace:spin;
+
+Object.keys(data).forEach(name=>{
+
+const button=document.createElement("button");
+
+button.textContent=name;
+
+button.onclick=()=>simulate(name);
+
+box.appendChild(button);
+
+});
+
+}
+
+function simulate(name){
+
+const data=currentType==="pace"?pace:spin;
+
+const d=data[name];
+
+document.getElementById("delivery").textContent=name;
+document.getElementById("speed").textContent=d.speed;
+document.getElementById("length").textContent=d.length;
+document.getElementById("movement").textContent=d.movement;
+
+document.getElementById("trajectory")
+.setAttribute("d",d.curve);
+
+document.getElementById("bounce")
+.setAttribute("cy",d.bounce);
+
+document.getElementById("bounceRing")
+.setAttribute("cy",d.bounce);
+
+document.getElementById("bounceText")
+.setAttribute("y",d.bounce);
+
+animateBall();
+
+}
+
+function animateBall(){
+
+const ball=document.getElementById("ball");
+
+ball.setAttribute("cx",500);
+ball.setAttribute("cy",115);
+
+let y=115;
+
+const target=document.getElementById("bounce")
+.getAttribute("cy");
+
+const interval=setInterval(()=>{
+
+y+=8;
+
+ball.setAttribute("cy",y);
+
+if(y>=target){
+
+clearInterval(interval);
+
+}
+
+},25);
+
+}
+
+createButtons();
+
+</script>
+
+</body>
+</html>
